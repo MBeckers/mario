@@ -13,7 +13,7 @@ window.onload = init;
 
 const tilemap = [
     [418, 480, 143, 175],
-    [576, 640, 127, 175]
+    [578, 640, 127, 175]
 ]
 
 function init() {
