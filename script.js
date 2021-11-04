@@ -1,45 +1,143 @@
-let marioX = 50;
-let marioY = 100;
-let marioAccX = 0;
-let marioAccY = 0;
+let marioX;
+let positionX;
+let backgroundX;
+let marioY;
+let marioAccX;
+let marioAccY;
+let ground;
 let canvas;
 let context;
+let controls;
 
 window.onload = init;
 
-function init(){
+const tilemap = [
+    [418, 480, 143, 175],
+    [576, 640, 127, 175]
+]
+
+function init() {
     canvas = document.getElementById('canvas');
     context = canvas.getContext('2d');
+
+    initData()
 
     // Start the first frame request
     window.requestAnimationFrame(gameLoop);
 }
 
-function gameLoop(timeStamp){
+function initData() {
+    marioX = 50;
+    backgroundX = 0;
+    marioY = 100;
+    marioAccX = 0;
+    marioAccY = 0;
+    ground = 175;
+    controls = "";
+}
+
+function gameLoop(timeStamp) {
+    map();
     gravity();
-    collision();
+    move();
     render();
+
 
     // Keep requesting new frames
     window.requestAnimationFrame(gameLoop);
 }
 
-function gravity() {
-    marioAccY = Math.min(10, marioAccY+=0.5 )
-    console.log(marioAccY);
+function map() {
+    positionX = marioX-backgroundX;
+    ground = 175;
+    tilemap.forEach(element => {
+        if (
+            positionX > element[0] &&
+            positionX < element[1] &&
+            marioY <= element[3]
+        ) {
+            ground = element[2]
+        }
+    });
+    console.log(positionX, marioY);
 
-    if (!collision()) {
-        marioY = marioY + marioAccY;
-    } else {
-        marioAccY=0;    
-        marioY = 175
+    // if (marioY > 300) {
+    //     alert('LOST');
+    //     init();
+    // }
+    // if (positionX > 1089 && positionX < 1121) {
+    //     ground = 400;
+    // }
+    // else {
+    //     ground = 175;
+    // }
+
+    // console.log(positionX);
+}
+
+function move() {
+    let speed = 2;
+    if (controls == "left" && marioX>=10) {
+        if (collisionMove()) {
+            console.log('collision')
+        } else {
+            marioX = marioX - speed;
+        }
+
+    }
+    if (controls == "right") {
+        if (collisionMove()) {
+            console.log('collision')
+        } else {
+            if (marioX<=400) {
+                marioX = marioX + speed;
+            } else {
+                backgroundX = backgroundX - speed
+            }
+        }
+
     }
 
 }
 
-function collision() {
-    return marioY > 175
+function gravity() {
+    marioAccY = Math.min(10, marioAccY+=0.25 )
+    marioY = marioY + marioAccY;
+
+    if (collisionGround()) {
+        marioAccY = 0;
+        marioY = ground;
+    }
 }
+
+function collisionGround() {
+    return marioY >= ground;
+}
+
+function collisionMove() {
+    return tilemap.find(element => {
+        if (controls == 'right') {
+            if (positionX >= element[0] &&
+                positionX < element[1] &&
+                marioY > element[2] &&
+                marioY <= element[3]
+                ) {
+                return true;
+            }
+        }
+        if (controls == 'left') {
+            if (positionX > element[0] &&
+                positionX <= element[1] &&
+                marioY > element[2] &&
+                marioY <= element[3]
+            ) {
+                return true;
+            }
+        }
+    })
+    return false;
+}
+
 
 function render() {
     var canvas = document.getElementById("canvas");
@@ -47,24 +145,44 @@ function render() {
     var mario  = document.getElementById("mario");
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(background, Math.min(50-marioX,0), 0);
-    ctx.drawImage(mario, 50, marioY, 32, 32);
+    ctx.drawImage(background, backgroundX, 0);
+    ctx.drawImage(mario, Math.min(marioX, 400), marioY, 32, 32);
 }
 
-document.onkeypress = function (e) {
-    e = e || window.event;
-    if (e.keyCode == 119) {
-        marioAccY = -10;
+
+function keyDown(code) {
+    if (code == 87) {
+        if (collisionGround()) {
+            marioAccY = -7;
+        }
     }
-    if (e.keyCode == 115) {
-        marioY = marioY + 10;
+    if (code == 115) {
+        //down?
     }
-    if (e.keyCode == 97) {
-        marioX = marioX - 10;
+    if (code == 68) {
+        controls = 'right';
     }
-    if (e.keyCode == 100) {
-        marioX = marioX + 10;
+    if (code == 65) {
+        controls = 'left';
     }
     render()
-    console.log(e.keyCode)
+   // console.log(code)
 };
+
+function keyUp(code) {
+    if (code == 68) {
+        controls = '';
+    }
+    if (code == 65) {
+        controls = '';
+    }
+}
+
+document.onkeyup = function (e) {
+    e = e || window.event;
+    keyUp(e.keyCode);
+}
+document.onkeydown = function (e) {
+    e = e || window.event;
+    keyDown(e.keyCode);
+}
